@@ -164,23 +164,16 @@ struct EVE_NexusApp: App {
         )[0].appendingPathComponent("Icons")
         let iconURL = URL(fileURLWithPath: iconPath)
 
-        // 计算当前 icons.zip 的 SHA256 值
-        let currentHash = calculateSHA256(filePath: iconPath)
-        let storedHash = UserDefaults.standard.string(forKey: "IconsZipHash")
+        // 检查是否已经有图标文件
+        let iconsExist = FileManager.default.fileExists(atPath: destinationPath.path)
+        let hasContents = (try? FileManager.default.contentsOfDirectory(atPath: destinationPath.path))?.isEmpty == false
 
-        // 如果哈希值不同，需要重新解压
-        let needsReExtract = currentHash != storedHash
-
-        // 检查是否已经成功解压过
-        if !needsReExtract,
-           IconManager.shared.isExtractionComplete,
-           FileManager.default.fileExists(atPath: destinationPath.path),
-           let contents = try? FileManager.default.contentsOfDirectory(
-               atPath: destinationPath.path),
-           !contents.isEmpty
+        // 如果图标目录存在且有内容，说明已经解压过（可能是 Bundle 的，也可能是下载的）
+        if iconsExist,
+           hasContents,
+           IconManager.shared.isExtractionComplete
         {
-            Logger.debug(
-                "Icons folder exists and contains \(contents.count) files, skipping extraction.")
+            Logger.debug("Icons folder exists and extraction is complete, skipping extraction.")
             await MainActor.run {
                 databaseManager.loadDatabase()
                 isInitialized = true
@@ -188,12 +181,15 @@ struct EVE_NexusApp: App {
             return
         }
 
+        // 图标目录不存在或为空，从 Bundle 解压
+        Logger.info("Icons folder does not exist or is empty, extracting from Bundle...")
+
         // 需要解压
         await MainActor.run {
             needsUnzip = true
         }
 
-        // 如果目录存在但未完全解压，删除它重新解压
+        // 如果目录存在但为空，删除它重新解压
         if FileManager.default.fileExists(atPath: destinationPath.path) {
             try? FileManager.default.removeItem(at: destinationPath)
         }
@@ -207,8 +203,9 @@ struct EVE_NexusApp: App {
             }
 
             // 保存新的哈希值
-            if let hash = currentHash {
+            if let hash = calculateSHA256(filePath: iconPath) {
                 UserDefaults.standard.set(hash, forKey: "IconsZipHash")
+                Logger.info("Saved Bundle icons hash: \(hash)")
             }
 
             await MainActor.run {
