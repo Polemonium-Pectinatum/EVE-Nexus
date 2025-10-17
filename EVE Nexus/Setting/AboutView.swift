@@ -35,9 +35,9 @@ struct AboutView: View {
             ),
             AboutItem(
                 title: NSLocalizedString("Main_About_Report_Bug", comment: ""),
-                value: "jzx1040798357@icloud.com",
+                value: "tritanium_support@icloud.com",
                 icon: "envelope.fill",
-                url: URL(string: "mailto:jzx1040798357@icloud.com")
+                url: URL(string: "mailto:tritanium_support@icloud.com")
             ),
             AboutItem(
                 title: NSLocalizedString("Main_About_copyright_Title", comment: ""),

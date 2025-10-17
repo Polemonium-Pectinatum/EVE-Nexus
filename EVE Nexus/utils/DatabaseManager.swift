@@ -108,7 +108,7 @@ class DatabaseManager: ObservableObject {
     }
 
     // 加载组
-    func loadGroups(for categoryID: Int) -> ([Group], [Group]) {
+    func loadGroups(for categoryID: Int) -> ([TypeGroup], [TypeGroup]) {
         let query = """
             SELECT g.group_id, g.name, g.en_name, g.categoryID, g.published, g.icon_filename
             FROM groups g
@@ -117,8 +117,8 @@ class DatabaseManager: ObservableObject {
 
         let result = executeQuery(query, parameters: [categoryID])
 
-        var published: [Group] = []
-        var unpublished: [Group] = []
+        var published: [TypeGroup] = []
+        var unpublished: [TypeGroup] = []
 
         switch result {
         case let .success(rows):
@@ -134,7 +134,7 @@ class DatabaseManager: ObservableObject {
 
                 let isPublished = (row["published"] as? Int ?? 0) != 0
 
-                let group = Group(
+                let group = TypeGroup(
                     id: groupId,
                     name: name,
                     enName: enName,
@@ -1378,7 +1378,7 @@ class DatabaseManager: ObservableObject {
                                 bonusType: bonusType
                             ))
                     case "typeBonuses":
-                        if let skill = row["skill"] as? Int {
+                        if let skill = row["skill"] as? Int, skill > 0 {
                             typeBonuses.append(
                                 Trait(
                                     content: content,
